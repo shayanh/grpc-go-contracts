@@ -7,6 +7,7 @@ import (
 	"google.golang.org/grpc"
 )
 
+// UnaryRPCContract represents a contract for a unary RPC
 type UnaryRPCContract struct {
 	Method         Method
 	PreConditions  []Condition
@@ -18,12 +19,14 @@ func (u *UnaryRPCContract) validate() error {
 	return nil
 }
 
+// Logger represents the logger interface
 type Logger interface {
 	Info(args ...interface{})
 	Error(args ...interface{})
 	Fatal(args ...interface{})
 }
 
+// UnaryRPCCall represents an RPC call and its details
 type UnaryRPCCall struct {
 	MethodName string
 	Request    interface{}
@@ -31,6 +34,7 @@ type UnaryRPCCall struct {
 	Error      error
 }
 
+// ServerContract is the contract which defined for a gRPC server
 type ServerContract struct {
 	logger Logger
 
@@ -42,11 +46,13 @@ type ServerContract struct {
 	serve             bool
 }
 
+// RPCCallHistory lets you to have access to the RPC calls which made during an RPC lifetime
 type RPCCallHistory struct {
 	requestID string
 	sc        *ServerContract
 }
 
+// All returns all stored RPCs
 func (h *RPCCallHistory) All() []*UnaryRPCCall {
 	h.sc.callsLock.RLock()
 	defer h.sc.callsLock.RUnlock()
@@ -58,6 +64,7 @@ func (h *RPCCallHistory) All() []*UnaryRPCCall {
 	return res
 }
 
+// Filter returns RPC calls to the given method
 func (h *RPCCallHistory) Filter(method Method) []*UnaryRPCCall {
 	h.sc.callsLock.RLock()
 	defer h.sc.callsLock.RUnlock()
@@ -71,6 +78,7 @@ func (h *RPCCallHistory) Filter(method Method) []*UnaryRPCCall {
 	return res
 }
 
+// NewServerContract create a ServerContract which has no RPC contracts registered
 func NewServerContract(logger Logger) *ServerContract {
 	return &ServerContract{
 		logger:            logger,
@@ -79,6 +87,7 @@ func NewServerContract(logger Logger) *ServerContract {
 	}
 }
 
+// RegisterUnaryRPCContract registers an RPC contract to the server contract
 func (sc *ServerContract) RegisterUnaryRPCContract(rpcContract *UnaryRPCContract) {
 	if err := rpcContract.validate(); err != nil {
 		sc.logger.Fatal(err)
@@ -123,6 +132,7 @@ func (sc *ServerContract) cleanup(requestID string) {
 	}
 }
 
+// UnaryServerInterceptor returns a new unary server interceptor for monitoring server contracts
 func (sc *ServerContract) UnaryServerInterceptor() grpc.UnaryServerInterceptor {
 	sc.contractsLock.Lock()
 	defer sc.contractsLock.Unlock()
@@ -169,6 +179,7 @@ func (sc *ServerContract) UnaryServerInterceptor() grpc.UnaryServerInterceptor {
 	}
 }
 
+// UnaryClientInterceptor returns a new unary client interceptor for monitoring of RPC calls made by the client
 func (sc *ServerContract) UnaryClientInterceptor() grpc.UnaryClientInterceptor {
 	return func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
 		err := invoker(ctx, method, req, reply, cc, opts...)

@@ -9,6 +9,7 @@ import (
 type ctxKey int
 
 const (
+	// RequestIDKey is the request context key used to store the request ID
 	RequestIDKey ctxKey = iota + 1
 )
 

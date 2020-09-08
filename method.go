@@ -6,6 +6,7 @@ import (
 	"strings"
 )
 
+// Method represents a method of a gPRC server (an RPC)
 type Method interface{}
 
 func getMethodName(method Method) string {

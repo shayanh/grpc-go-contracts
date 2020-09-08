@@ -2,6 +2,7 @@ package contracts
 
 import "reflect"
 
+// Condition represents a pre or post condition. Must be a function with specified signature
 type Condition interface{}
 
 func invokeCondition(c Condition, args ...interface{}) error {
