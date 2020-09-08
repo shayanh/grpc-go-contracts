@@ -2,63 +2,10 @@ package contracts
 
 import (
 	"context"
-	"crypto/rand"
-	"encoding/base64"
-	"io"
-	"reflect"
-	"runtime"
-	"strings"
 	"sync"
 
 	"google.golang.org/grpc"
 )
-
-type ctxKey int
-
-const (
-	RequestIDKey ctxKey = iota + 1
-)
-
-type Condition interface{}
-
-func invokeCondition(c Condition, args ...interface{}) error {
-	v := reflect.ValueOf(c)
-	t := v.Type()
-	argv := make([]reflect.Value, t.NumIn())
-	for i, arg := range args {
-		expectedType := t.In(i)
-		if arg == nil {
-			argv[i] = reflect.New(expectedType).Elem()
-		} else {
-			argv[i] = reflect.ValueOf(arg)
-		}
-	}
-	res := v.Call(argv)
-	err, _ := res[0].Interface().(error)
-	return err
-}
-
-func invokePreCondition(c Condition, req interface{}) error {
-	return invokeCondition(c, req)
-}
-
-func invokePostCondition(c Condition, resp interface{}, respErr error, req interface{}, callHistory RPCCallHistory) error {
-	return invokeCondition(c, resp, respErr, req, callHistory)
-}
-
-type Method interface{}
-
-func getMethodName(method Method) string {
-	return runtime.FuncForPC(reflect.ValueOf(method).Pointer()).Name()
-}
-
-func sameMethods(method Method, fullMethodName string) bool {
-	tmp1 := strings.Split(getMethodName(method), ".")
-	tmp2 := strings.Split(fullMethodName, "/")
-	m1 := tmp1[len(tmp1)-1]
-	m2 := tmp2[len(tmp2)-1]
-	return m1 == m2
-}
 
 type UnaryRPCContract struct {
 	Method         Method
@@ -151,12 +98,6 @@ func (sc *ServerContract) register(rpcContract *UnaryRPCContract) {
 		sc.logger.Fatal("ServerContract.RegisterUnaryRPCContract found duplicate contract registration")
 	}
 	sc.unaryRPCContracts[methodName] = rpcContract
-}
-
-func shortID() string {
-	b := make([]byte, 10)
-	io.ReadFull(rand.Reader, b)
-	return base64.RawURLEncoding.EncodeToString(b)
 }
 
 func (sc *ServerContract) generateRequestID(ctx context.Context) (context.Context, string) {
