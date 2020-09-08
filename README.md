@@ -17,7 +17,6 @@ rpcContract := &contracts.UnaryRPCContract{
             }
             year := int32(time.Now().Year())
             if req.GetCreditCard().GetCreditCardExpirationYear() < year || req.CreditCard.GetCreditCardExpirationYear() > year+4 {
-                log.Info("year = ", year, " req.year = ", req.GetCreditCard().GetCreditCardExpirationYear())
                 return errors.New("credit card year is in invalid range")
             }
             if req.CreditCard.GetCreditCardExpirationMonth() > 12 {
