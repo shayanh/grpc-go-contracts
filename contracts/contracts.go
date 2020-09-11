@@ -26,14 +26,6 @@ type Logger interface {
 	Fatal(args ...interface{})
 }
 
-// UnaryRPCCall represents an RPC call and its details
-type UnaryRPCCall struct {
-	MethodName string
-	Request    interface{}
-	Response   interface{}
-	Error      error
-}
-
 // ServerContract is the contract which defined for a gRPC server
 type ServerContract struct {
 	logger Logger
@@ -44,38 +36,6 @@ type ServerContract struct {
 	contractsLock     sync.Mutex
 	unaryRPCContracts map[string]*UnaryRPCContract
 	serve             bool
-}
-
-// RPCCallHistory lets you to have access to the RPC calls which made during an RPC lifetime
-type RPCCallHistory struct {
-	requestID string
-	sc        *ServerContract
-}
-
-// All returns all stored RPCs
-func (h *RPCCallHistory) All() []*UnaryRPCCall {
-	h.sc.callsLock.RLock()
-	defer h.sc.callsLock.RUnlock()
-
-	var res []*UnaryRPCCall
-	for _, calls := range h.sc.unaryRPCCalls[h.requestID] {
-		res = append(res, calls...)
-	}
-	return res
-}
-
-// Filter returns RPC calls to the given method
-func (h *RPCCallHistory) Filter(method Method) []*UnaryRPCCall {
-	h.sc.callsLock.RLock()
-	defer h.sc.callsLock.RUnlock()
-
-	var res []*UnaryRPCCall
-	for methodName, calls := range h.sc.unaryRPCCalls[h.requestID] {
-		if sameMethods(method, methodName) {
-			res = append(res, calls...)
-		}
-	}
-	return res
 }
 
 // NewServerContract create a ServerContract which has no RPC contracts registered
