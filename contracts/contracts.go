@@ -32,6 +32,7 @@ type ServerContract struct {
 
 	callsLock     sync.RWMutex
 	unaryRPCCalls map[string]map[string][]*UnaryRPCCall
+	callCnt       map[string]int
 
 	contractsLock     sync.Mutex
 	unaryRPCContracts map[string]*UnaryRPCContract
@@ -43,6 +44,7 @@ func NewServerContract(logger Logger) *ServerContract {
 	return &ServerContract{
 		logger:            logger,
 		unaryRPCCalls:     make(map[string]map[string][]*UnaryRPCCall),
+		callCnt:           make(map[string]int),
 		unaryRPCContracts: make(map[string]*UnaryRPCContract),
 	}
 }
@@ -89,6 +91,7 @@ func (sc *ServerContract) cleanup(requestID string) {
 
 	if _, ok := sc.unaryRPCCalls[requestID]; ok {
 		delete(sc.unaryRPCCalls, requestID)
+		delete(sc.callCnt, requestID)
 	}
 }
 
@@ -144,16 +147,19 @@ func (sc *ServerContract) UnaryClientInterceptor() grpc.UnaryClientInterceptor {
 			sc.callsLock.Lock()
 			defer sc.callsLock.Unlock()
 
+			if _, ok := sc.unaryRPCCalls[requestID]; !ok {
+				sc.unaryRPCCalls[requestID] = make(map[string][]*UnaryRPCCall)
+				sc.callCnt[requestID] = 0
+			}
 			call := &UnaryRPCCall{
 				MethodName: method,
 				Request:    req,
 				Response:   reply,
 				Error:      err,
-			}
-			if _, ok := sc.unaryRPCCalls[requestID]; !ok {
-				sc.unaryRPCCalls[requestID] = make(map[string][]*UnaryRPCCall)
+				Order:      sc.callCnt[requestID],
 			}
 			sc.unaryRPCCalls[requestID][method] = append(sc.unaryRPCCalls[requestID][method], call)
+			sc.callCnt[requestID]++
 		}
 		return err
 	}

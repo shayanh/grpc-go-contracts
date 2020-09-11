@@ -6,6 +6,7 @@ type UnaryRPCCall struct {
 	Request    interface{}
 	Response   interface{}
 	Error      error
+	Order      int
 }
 
 // RPCCallHistory lets you to have access to the RPC calls which made during an RPC lifetime
