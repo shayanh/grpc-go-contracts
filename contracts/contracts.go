@@ -139,21 +139,17 @@ func (sc *ServerContract) UnaryServerInterceptor() grpc.UnaryServerInterceptor {
 	sc.serve = true
 
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
-		// sc.logger.Info("server info full method = ", info.FullMethod)
-
 		var requestID string
 		ctx, requestID = sc.generateRequestID(ctx)
 
 		var c *UnaryRPCContract
 		for _, contract := range sc.unaryRPCContracts {
 			if eq := sameMethods(contract.Method, info.FullMethod); eq {
-				// sc.logger.Info("contract method = ", getMethodName(contract.Method))
 				c = contract
 				break
 			}
 		}
 		if c != nil {
-			// sc.logger.Info("pre")
 			for _, preCondition := range c.PreConditions {
 				err := invokePreCondition(preCondition, req)
 				if err != nil {
@@ -165,7 +161,6 @@ func (sc *ServerContract) UnaryServerInterceptor() grpc.UnaryServerInterceptor {
 		resp, err := handler(ctx, req)
 
 		if c != nil {
-			// sc.logger.Info("post")
 			for _, postCondition := range c.PostConditions {
 				err := invokePostCondition(postCondition, resp, err, req,
 					RPCCallHistory{requestID: requestID, sc: sc})
