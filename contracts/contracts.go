@@ -26,56 +26,17 @@ type Logger interface {
 	Fatal(args ...interface{})
 }
 
-// UnaryRPCCall represents an RPC call and its details
-type UnaryRPCCall struct {
-	MethodName string
-	Request    interface{}
-	Response   interface{}
-	Error      error
-}
-
 // ServerContract is the contract which defined for a gRPC server
 type ServerContract struct {
 	logger Logger
 
 	callsLock     sync.RWMutex
 	unaryRPCCalls map[string]map[string][]*UnaryRPCCall
+	callCnt       map[string]int
 
 	contractsLock     sync.Mutex
 	unaryRPCContracts map[string]*UnaryRPCContract
 	serve             bool
-}
-
-// RPCCallHistory lets you to have access to the RPC calls which made during an RPC lifetime
-type RPCCallHistory struct {
-	requestID string
-	sc        *ServerContract
-}
-
-// All returns all stored RPCs
-func (h *RPCCallHistory) All() []*UnaryRPCCall {
-	h.sc.callsLock.RLock()
-	defer h.sc.callsLock.RUnlock()
-
-	var res []*UnaryRPCCall
-	for _, calls := range h.sc.unaryRPCCalls[h.requestID] {
-		res = append(res, calls...)
-	}
-	return res
-}
-
-// Filter returns RPC calls to the given method
-func (h *RPCCallHistory) Filter(method Method) []*UnaryRPCCall {
-	h.sc.callsLock.RLock()
-	defer h.sc.callsLock.RUnlock()
-
-	var res []*UnaryRPCCall
-	for methodName, calls := range h.sc.unaryRPCCalls[h.requestID] {
-		if sameMethods(method, methodName) {
-			res = append(res, calls...)
-		}
-	}
-	return res
 }
 
 // NewServerContract create a ServerContract which has no RPC contracts registered
@@ -83,6 +44,7 @@ func NewServerContract(logger Logger) *ServerContract {
 	return &ServerContract{
 		logger:            logger,
 		unaryRPCCalls:     make(map[string]map[string][]*UnaryRPCCall),
+		callCnt:           make(map[string]int),
 		unaryRPCContracts: make(map[string]*UnaryRPCContract),
 	}
 }
@@ -129,6 +91,7 @@ func (sc *ServerContract) cleanup(requestID string) {
 
 	if _, ok := sc.unaryRPCCalls[requestID]; ok {
 		delete(sc.unaryRPCCalls, requestID)
+		delete(sc.callCnt, requestID)
 	}
 }
 
@@ -139,21 +102,17 @@ func (sc *ServerContract) UnaryServerInterceptor() grpc.UnaryServerInterceptor {
 	sc.serve = true
 
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
-		// sc.logger.Info("server info full method = ", info.FullMethod)
-
 		var requestID string
 		ctx, requestID = sc.generateRequestID(ctx)
 
 		var c *UnaryRPCContract
 		for _, contract := range sc.unaryRPCContracts {
 			if eq := sameMethods(contract.Method, info.FullMethod); eq {
-				// sc.logger.Info("contract method = ", getMethodName(contract.Method))
 				c = contract
 				break
 			}
 		}
 		if c != nil {
-			// sc.logger.Info("pre")
 			for _, preCondition := range c.PreConditions {
 				err := invokePreCondition(preCondition, req)
 				if err != nil {
@@ -165,7 +124,6 @@ func (sc *ServerContract) UnaryServerInterceptor() grpc.UnaryServerInterceptor {
 		resp, err := handler(ctx, req)
 
 		if c != nil {
-			// sc.logger.Info("post")
 			for _, postCondition := range c.PostConditions {
 				err := invokePostCondition(postCondition, resp, err, req,
 					RPCCallHistory{requestID: requestID, sc: sc})
@@ -189,16 +147,19 @@ func (sc *ServerContract) UnaryClientInterceptor() grpc.UnaryClientInterceptor {
 			sc.callsLock.Lock()
 			defer sc.callsLock.Unlock()
 
+			if _, ok := sc.unaryRPCCalls[requestID]; !ok {
+				sc.unaryRPCCalls[requestID] = make(map[string][]*UnaryRPCCall)
+				sc.callCnt[requestID] = 0
+			}
 			call := &UnaryRPCCall{
 				MethodName: method,
 				Request:    req,
 				Response:   reply,
 				Error:      err,
-			}
-			if _, ok := sc.unaryRPCCalls[requestID]; !ok {
-				sc.unaryRPCCalls[requestID] = make(map[string][]*UnaryRPCCall)
+				Order:      sc.callCnt[requestID],
 			}
 			sc.unaryRPCCalls[requestID][method] = append(sc.unaryRPCCalls[requestID][method], call)
+			sc.callCnt[requestID]++
 		}
 		return err
 	}
