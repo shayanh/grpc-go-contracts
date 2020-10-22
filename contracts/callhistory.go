@@ -28,15 +28,12 @@ func (h *RPCCallHistory) All() []*UnaryRPCCall {
 }
 
 // Filter returns RPC calls to the given method
-func (h *RPCCallHistory) Filter(method Method) []*UnaryRPCCall {
+func (h *RPCCallHistory) Filter(method string) []*UnaryRPCCall {
 	h.sc.callsLock.RLock()
 	defer h.sc.callsLock.RUnlock()
 
-	var res []*UnaryRPCCall
-	for methodName, calls := range h.sc.unaryRPCCalls[h.requestID] {
-		if sameMethods(method, methodName) {
-			res = append(res, calls...)
-		}
-	}
+	src := h.sc.unaryRPCCalls[h.requestID][method]
+	res := make([]*UnaryRPCCall, len(src))
+	copy(res, src)
 	return res
 }

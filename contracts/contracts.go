@@ -9,7 +9,7 @@ import (
 
 // UnaryRPCContract represents a contract for a unary RPC
 type UnaryRPCContract struct {
-	Method         Method
+	MethodName     string
 	PreConditions  []Condition
 	PostConditions []Condition
 }
@@ -17,6 +17,11 @@ type UnaryRPCContract struct {
 func (u *UnaryRPCContract) validate() error {
 	// TODO
 	return nil
+}
+
+type ServiceContract struct {
+	ServiceName  string
+	RPCContracts []*UnaryRPCContract
 }
 
 // Logger represents the logger interface
@@ -49,26 +54,30 @@ func NewServerContract(logger Logger) *ServerContract {
 	}
 }
 
-// RegisterUnaryRPCContract registers an RPC contract to the server contract
-func (sc *ServerContract) RegisterUnaryRPCContract(rpcContract *UnaryRPCContract) {
-	if err := rpcContract.validate(); err != nil {
-		sc.logger.Fatal(err)
+func (sc *ServerContract) RegisterServiceContract(svcContract *ServiceContract) {
+	for _, rpcContract := range svcContract.RPCContracts {
+		if err := rpcContract.validate(); err != nil {
+			sc.logger.Fatal(err)
+		}
 	}
-	sc.register(rpcContract)
+	sc.register(svcContract)
 }
 
-func (sc *ServerContract) register(rpcContract *UnaryRPCContract) {
+func (sc *ServerContract) register(svcContract *ServiceContract) {
 	sc.contractsLock.Lock()
 	defer sc.contractsLock.Unlock()
 
 	if sc.serve {
-		sc.logger.Fatal("ServerContract.RegisterUnaryRPCContract must called before ServerContract.UnaryServerInterceptor")
+		sc.logger.Fatal("ServerContract.RegisterServiceContract must called before ServerContract.UnaryServerInterceptor")
 	}
-	methodName := getMethodName(rpcContract.Method) // TODO: this is not the best key
-	if _, ok := sc.unaryRPCContracts[methodName]; ok {
-		sc.logger.Fatal("ServerContract.RegisterUnaryRPCContract found duplicate contract registration")
+
+	for _, rpcContract := range svcContract.RPCContracts {
+		fullMethodName := getFullMethodName(svcContract.ServiceName, rpcContract.MethodName)
+		if _, ok := sc.unaryRPCContracts[fullMethodName]; ok {
+			sc.logger.Fatal("ServerContract.RegisterServiceContract found duplicate contract registration")
+		}
+		sc.unaryRPCContracts[fullMethodName] = rpcContract
 	}
-	sc.unaryRPCContracts[methodName] = rpcContract
 }
 
 func (sc *ServerContract) generateRequestID(ctx context.Context) (context.Context, string) {
@@ -105,14 +114,8 @@ func (sc *ServerContract) UnaryServerInterceptor() grpc.UnaryServerInterceptor {
 		var requestID string
 		ctx, requestID = sc.generateRequestID(ctx)
 
-		var c *UnaryRPCContract
-		for _, contract := range sc.unaryRPCContracts {
-			if eq := sameMethods(contract.Method, info.FullMethod); eq {
-				c = contract
-				break
-			}
-		}
-		if c != nil {
+		c, ok := sc.unaryRPCContracts[info.FullMethod]
+		if ok {
 			for _, preCondition := range c.PreConditions {
 				err := invokePreCondition(preCondition, req)
 				if err != nil {
@@ -123,7 +126,7 @@ func (sc *ServerContract) UnaryServerInterceptor() grpc.UnaryServerInterceptor {
 
 		resp, err := handler(ctx, req)
 
-		if c != nil {
+		if ok {
 			for _, postCondition := range c.PostConditions {
 				err := invokePostCondition(postCondition, resp, err, req,
 					RPCCallHistory{requestID: requestID, sc: sc})
