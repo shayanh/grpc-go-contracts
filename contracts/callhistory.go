@@ -2,7 +2,7 @@ package contracts
 
 // UnaryRPCCall represents an RPC call and its details
 type UnaryRPCCall struct {
-	MethodName string
+	FullMethod string
 	Request    interface{}
 	Response   interface{}
 	Error      error
@@ -28,11 +28,12 @@ func (h *RPCCallHistory) All() []*UnaryRPCCall {
 }
 
 // Filter returns RPC calls to the given method
-func (h *RPCCallHistory) Filter(method string) []*UnaryRPCCall {
+func (h *RPCCallHistory) Filter(serviceName, methodName string) []*UnaryRPCCall {
 	h.sc.callsLock.RLock()
 	defer h.sc.callsLock.RUnlock()
 
-	src := h.sc.unaryRPCCalls[h.requestID][method]
+	fullMethod := getFullMethodName(serviceName, methodName)
+	src := h.sc.unaryRPCCalls[h.requestID][fullMethod]
 	res := make([]*UnaryRPCCall, len(src))
 	copy(res, src)
 	return res

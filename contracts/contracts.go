@@ -155,7 +155,7 @@ func (sc *ServerContract) UnaryClientInterceptor() grpc.UnaryClientInterceptor {
 				sc.callCnt[requestID] = 0
 			}
 			call := &UnaryRPCCall{
-				MethodName: method,
+				FullMethod: method,
 				Request:    req,
 				Response:   reply,
 				Error:      err,
