@@ -5,7 +5,7 @@ import (
 	"sort"
 )
 
-// UnaryRPCCall represents an RPC call and its details
+// UnaryRPCCall represents an RPC call and its details.
 type UnaryRPCCall struct {
 	FullMethod string
 	Request    interface{}
@@ -14,15 +14,16 @@ type UnaryRPCCall struct {
 	Order      int
 }
 
-// RPCCallHistory lets you to have access to the RPC calls which made during an RPC lifetime
+// RPCCallHistory lets you have access to the RPC calls made during an RPC lifetime.
 type RPCCallHistory struct {
 	requestID string
 	sc        *ServerContract
 }
 
+// CallSet is a set of UnaryRPCCalls that provides APIs for simpler usage.
 type CallSet []*UnaryRPCCall
 
-// All returns all stored RPCs
+// All returns all invoked RPCs.
 func (h *RPCCallHistory) All() CallSet {
 	h.sc.callsLock.RLock()
 	defer h.sc.callsLock.RUnlock()
@@ -34,7 +35,7 @@ func (h *RPCCallHistory) All() CallSet {
 	return res
 }
 
-// Filter returns RPC calls to the given method
+// Filter returns RPC calls to the given method.
 func (h *RPCCallHistory) Filter(serviceName, methodName string) CallSet {
 	h.sc.callsLock.RLock()
 	defer h.sc.callsLock.RUnlock()
@@ -46,6 +47,7 @@ func (h *RPCCallHistory) Filter(serviceName, methodName string) CallSet {
 	return res
 }
 
+// Successful filters successful RPC calls and returns them.
 func (cs CallSet) Successful() CallSet {
 	var res CallSet
 	for _, call := range cs {
@@ -56,6 +58,7 @@ func (cs CallSet) Successful() CallSet {
 	return res
 }
 
+// Ordered sorts RPC calls in the call set by their invocation time.
 func (cs CallSet) Ordered() CallSet {
 	sort.Slice(cs, func(i, j int) bool {
 		return cs[i].Order < cs[i].Order
@@ -63,14 +66,17 @@ func (cs CallSet) Ordered() CallSet {
 	return cs
 }
 
+// Empty returns true if the call set is empty.
 func (cs CallSet) Empty() bool {
 	return len(cs) <= 0
 }
 
+// Count returns the number of RPC calls in the call set.
 func (cs CallSet) Count() int {
 	return len(cs)
 }
 
+// First returns the first RPC call in the call set (if exists).
 func (cs CallSet) First() (*UnaryRPCCall, error) {
 	if cs.Empty() {
 		return nil, errors.New("No call exists")
