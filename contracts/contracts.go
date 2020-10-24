@@ -15,7 +15,16 @@ type UnaryRPCContract struct {
 }
 
 func (u *UnaryRPCContract) validate() error {
-	// TODO
+	for _, c := range u.PreConditions {
+		if err := validatePreCondition(c); err != nil {
+			return err
+		}
+	}
+	for _, c := range u.PostConditions {
+		if err := validatePostCondition(c); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
