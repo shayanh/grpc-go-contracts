@@ -41,7 +41,7 @@ func isError(t reflect.Type) bool {
 	return t.Implements(errorInterface)
 }
 
-// pre-condition function signature is
+// Pre-condition function signature is
 // `func(req *Request) error`.
 func validatePreCondition(c Condition) error {
 	v := reflect.ValueOf(c)
@@ -61,7 +61,7 @@ func validatePreCondition(c Condition) error {
 	return nil
 }
 
-// post-condition function signature is
+// Post-condition function signature is
 // `func(resp *Response, respErr error, req *Request, calls contracts.RPCCallHistory) error`.
 func validatePostCondition(c Condition) error {
 	v := reflect.ValueOf(c)

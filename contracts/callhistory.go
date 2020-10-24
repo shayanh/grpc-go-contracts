@@ -61,7 +61,7 @@ func (cs CallSet) Successful() CallSet {
 // Ordered sorts RPC calls in the call set by their invocation time.
 func (cs CallSet) Ordered() CallSet {
 	sort.Slice(cs, func(i, j int) bool {
-		return cs[i].Order < cs[i].Order
+		return cs[i].Order < cs[j].Order
 	})
 	return cs
 }
