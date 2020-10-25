@@ -3,30 +3,28 @@
 Define preconditions and postcondtions for your gRPC APIs. For more information see [Design by Contract](https://en.wikipedia.org/wiki/Design_by_contract).
 
 
+## Installation
+
+Using `go get`:
+
+```bash
+$ go get github.com/shayanh/grpc-go-contracts/contracts
+```
+
 ## Usage
 
-Define contract for an RPC:
+Define a contract for an RPC:
 
 ```go
-rpcContract := &contracts.UnaryRPCContract{
-    Method: pb.CheckoutServiceServer.PlaceOrder,
+placeOrderContract := &contracts.UnaryRPCContract{
+    MethodName: "PlaceOrder",
     PreConditions: []contracts.Condition{
+        // CreditCard number must be valid
         func(req *pb.PlaceOrderRequest) error {
-            if req.GetCreditCard() == nil {
-                return errors.New("credit card cannot be nil")
-            }
-            year := int32(time.Now().Year())
-            if req.GetCreditCard().GetCreditCardExpirationYear() < year || req.CreditCard.GetCreditCardExpirationYear() > year+4 {
-                return errors.New("credit card year is in invalid range")
-            }
-            if req.CreditCard.GetCreditCardExpirationMonth() > 12 {
-                return errors.New("credit card month is in invalid range")
-            }
-            return nil
-        },
-        func(req *pb.PlaceOrderRequest) error {
-            if req.GetUserId() == "" {
-                return errors.New("user must be authenticated")
+            var creditCardNumberRegex = regexp.MustCompile("\\d{4}-\\d{4}-\\d{4}-\\d{4}")
+            n := req.CreditCard.GetCreditCardNumber()
+            if !creditCardNumberRegex.MatchString(n) {
+                return errors.New("credit card number is not valid")
             }
             return nil
         },
@@ -37,13 +35,8 @@ rpcContract := &contracts.UnaryRPCContract{
             if respErr != nil {
                 return nil
             }
-            shippingCalls := calls.Filter(pb.ShippingServiceClient.ShipOrder)
-            if len(shippingCalls) < 1 {
-                return errors.New("no call to shipping service")
-            }
-            shippingCall := shippingCalls[0]
-            if shippingCall.Error != nil || shippingCall.Response.(*pb.ShipOrderResponse).GetTrackingId() == "" {
-                return errors.New("invalid response from shipping service")
+            if calls.Filter("hipstershop.ShippingService", "ShipOrder").Successful().Empty() {
+                return errors.New("no successful call to shipping service")
             }
             return nil
         },
@@ -51,11 +44,23 @@ rpcContract := &contracts.UnaryRPCContract{
 }
 ```
 
-
-Define contract for the server and register related RPC contracts:
+Define contracts for a gRPC service and server:
 
 ```go
+checkoutServiceContract := &contracts.ServiceContract{
+    ServiceName: "hipstershop.CheckoutService",
+    RPCContracts: []*contracts.UnaryRPCContract{
+        placeOrderContract,
+    },
+}
+
 var log *logrus.Logger
 serverContract = contracts.NewServerContract(log)
-serverContract.RegisterUnaryRPCContract(rpcContract)
+serverContract.RegisterServiceContract(checkoutServiceContract)
+```
+
+And when using a gRPC client, remember to use `serverContract.UnaryClientInterceptor()`:
+
+```go
+conn, err := grpc.DialContext(ctx, shippingSvcAddr, grpc.WithUnaryInterceptor(serverContract.UnaryClientInterceptor()))
 ```
