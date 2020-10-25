@@ -7,11 +7,16 @@ import (
 
 // UnaryRPCCall represents an RPC call and its details.
 type UnaryRPCCall struct {
+	// FullMethod is the full RPC method string, i.e., /package.service/method.
 	FullMethod string
-	Request    interface{}
-	Response   interface{}
-	Error      error
-	Order      int
+	// Request is the body of the RPC request.
+	Request interface{}
+	// Response is the body of the RPC response.
+	Response interface{}
+	// Error is the error that returned with the RPC response.
+	Error error
+	// Order represents the invocation time of RPCs in ascending order.
+	Order int
 }
 
 // RPCCallHistory lets you have access to the RPC calls made during an RPC lifetime.
@@ -36,6 +41,8 @@ func (h *RPCCallHistory) All() CallSet {
 }
 
 // Filter returns RPC calls to the given method.
+// serviceName is name the gRPC service, i.e., package.service.
+// methodName is the method name only, without the service name or package name.
 func (h *RPCCallHistory) Filter(serviceName, methodName string) CallSet {
 	h.sc.callsLock.RLock()
 	defer h.sc.callsLock.RUnlock()

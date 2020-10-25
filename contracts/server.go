@@ -28,6 +28,7 @@ type ServerContract struct {
 }
 
 // NewServerContract creates a ServerContract that has no contracts registered.
+// It requires a logger to log the violation of its contracts.
 func NewServerContract(logger Logger) *ServerContract {
 	return &ServerContract{
 		logger:            logger,

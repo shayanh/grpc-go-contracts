@@ -5,7 +5,7 @@ import (
 	"reflect"
 )
 
-// Condition represents a pre or post-condition. Must be a function with the specified signature.
+// Condition represents a pre or postcondition. Must be a function with the specified signature.
 type Condition interface{}
 
 func invokeCondition(c Condition, args ...interface{}) error {
@@ -41,8 +41,7 @@ func isError(t reflect.Type) bool {
 	return t.Implements(errorInterface)
 }
 
-// Pre-condition function signature is
-// `func(req *Request) error`.
+// Precondition function signature is `func(req *Request) error`.
 func validatePreCondition(c Condition) error {
 	v := reflect.ValueOf(c)
 	if v.Kind() != reflect.Func {
@@ -61,7 +60,7 @@ func validatePreCondition(c Condition) error {
 	return nil
 }
 
-// Post-condition function signature is
+// Postcondition function signature is
 // `func(resp *Response, respErr error, req *Request, calls contracts.RPCCallHistory) error`.
 func validatePostCondition(c Condition) error {
 	v := reflect.ValueOf(c)
