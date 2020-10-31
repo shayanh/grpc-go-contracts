@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+option go_package = "github.com/shayanh/grpc-go-contracts/examples/noteservice/proto";
+
+package noteserivce;
+
+service NoteStore {
+    rpc GetNote(GetNoteRequest) returns (Note) {}
+}
+
+message GetNoteRequest {
+    int32 note_id = 1;
+    string token = 2;
+}
+
+message Note {
+    int32 note_id = 1;
+    string text = 2;
+}
+
+service AuthService {
+    rpc Authenticate(AuthenticateRequest) returns (AuthenticateResponse) {}
+}
+
+message AuthenticateRequest {
+    string token = 1;
+}
+
+message AuthenticateResponse {
+    int32 user_id = 1;
+}
