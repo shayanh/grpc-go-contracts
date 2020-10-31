@@ -2,10 +2,12 @@ package main
 
 import (
 	"context"
+	"errors"
 	"log"
 	"net"
 	"sync"
 
+	"github.com/shayanh/grpc-go-contracts/contracts"
 	pb "github.com/shayanh/grpc-go-contracts/examples/noteservice/proto"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -20,6 +22,7 @@ type noteStoreServer struct {
 	pb.UnimplementedNoteStoreServer
 
 	authServerAddress string
+	contract          *contracts.ServerContract
 
 	mutex sync.Mutex
 	notes []*pb.Note
@@ -38,13 +41,73 @@ func init() {
 	}
 }
 
+type Logger struct{}
+
+func (l Logger) Info(args ...interface{}) {
+	log.Print(args...)
+}
+
+func (l Logger) Error(args ...interface{}) {
+	log.Print(args...)
+}
+
+func (l Logger) Fatal(args ...interface{}) {
+	log.Fatal(args...)
+}
+
+func createContract() *contracts.ServerContract {
+	getNoteContract := &contracts.UnaryRPCContract{
+		MethodName: "GetNote",
+		PreConditions: []contracts.Condition{
+			func(in *pb.GetNoteRequest) error {
+				if in.NoteId < 0 {
+					return errors.New("NoteId must be positive")
+				}
+				return nil
+			},
+		},
+		PostConditions: []contracts.Condition{
+			func(out *pb.Note, outErr error, in *pb.GetNoteRequest, calls contracts.RPCCallHistory) error {
+				if outErr != nil {
+					return nil
+				}
+				if calls.Filter("noteservice.AuthService", "Authenticate").Successful().Empty() {
+					return errors.New("no successful call to auth service")
+				}
+				return nil
+			},
+			func(out *pb.Note, outErr error, in *pb.GetNoteRequest, calls contracts.RPCCallHistory) error {
+				if outErr != nil {
+					return nil
+				}
+				if in.NoteId != out.NoteId {
+					return errors.New("wrong note id in response")
+				}
+				return nil
+			},
+		},
+	}
+	noteStoreContract := &contracts.ServiceContract{
+		ServiceName: "noteservice.NoteStore",
+		RPCContracts: []*contracts.UnaryRPCContract{
+			getNoteContract,
+		},
+	}
+	serverContract := contracts.NewServerContract(Logger{})
+	serverContract.RegisterServiceContract(noteStoreContract)
+	return serverContract
+}
+
 func main() {
 	lis, err := net.Listen("tcp", port)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	s := grpc.NewServer()
+	contract := createContract()
+	noteStore.contract = contract
+
+	s := grpc.NewServer(grpc.UnaryInterceptor(contract.UnaryServerInterceptor()))
 	pb.RegisterNoteStoreServer(s, &noteStore)
 	if err := s.Serve(lis); err != nil {
 		log.Fatal(err)
@@ -52,7 +115,8 @@ func main() {
 }
 
 func (ns *noteStoreServer) authenticate(ctx context.Context, token string) (int, error) {
-	conn, err := grpc.Dial(ns.authServerAddress, grpc.WithInsecure())
+	conn, err := grpc.Dial(ns.authServerAddress, grpc.WithInsecure(),
+		grpc.WithUnaryInterceptor(ns.contract.UnaryClientInterceptor()))
 	if err != nil {
 		return -1, err
 	}
@@ -75,6 +139,8 @@ func (ns *noteStoreServer) GetNote(ctx context.Context, in *pb.GetNoteRequest) (
 	for _, note := range ns.notes {
 		if note.NoteId == in.NoteId {
 			return note, nil
+			// Wrong implementation:
+			// return &pb.Note{NoteId: note.NoteId + 1, Text: note.Text}, nil
 		}
 	}
 	return nil, status.Errorf(codes.NotFound, "no note with ID %d", in.NoteId)
