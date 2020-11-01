@@ -41,20 +41,6 @@ func init() {
 	}
 }
 
-type Logger struct{}
-
-func (l Logger) Info(args ...interface{}) {
-	log.Print(args...)
-}
-
-func (l Logger) Error(args ...interface{}) {
-	log.Print(args...)
-}
-
-func (l Logger) Fatal(args ...interface{}) {
-	log.Fatal(args...)
-}
-
 func createContract() *contracts.ServerContract {
 	getNoteContract := &contracts.UnaryRPCContract{
 		MethodName: "GetNote",
@@ -93,7 +79,7 @@ func createContract() *contracts.ServerContract {
 			getNoteContract,
 		},
 	}
-	serverContract := contracts.NewServerContract(Logger{})
+	serverContract := contracts.NewServerContract(log.Println)
 	serverContract.RegisterServiceContract(noteStoreContract)
 	return serverContract
 }
