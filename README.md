@@ -23,7 +23,7 @@ $ go get github.com/shayanh/grpc-go-contracts/contracts
 
 Let's consider a very simple note-taking application named NoteService. NoteService consists of two microservices:
 
-* [**NoteStore**](examples/noteservice/notestore/main.go): NoteStore simply stores notes. Its only API is `GetNote(note_id, token)`. `GetNote` first authenticates input `token` by calling AuthServices. If authentication was successful, it returns the related note.
+* [**NoteStore**](examples/noteservice/notestore/main.go): NoteStore simply stores notes. Its only API is `GetNote(note_id, token)`. `GetNote` first authenticates the input `token` by calling AuthServices. If authentication was successful, it returns the related note.
 * [**AuthService**](examples/noteservice/authservice/main.go): AuthService is responsible for authentication. Its only API is `Authenticate(token)`. `Authenticate` gets a token, and if the token was valid, it returns the related user ID.
 
 Protocol buffers definition of these services:
@@ -67,7 +67,7 @@ And we want to have the following postconditions for `GetNote` RPC:
 1. If `GetNote` return value has no error, then `GetNote` must successfully have called `Authenticate` RPC on AuthService. 
 2. If `GetNote` return value has no error, then output note ID must be equal to input `note_id`.
 
-First we define a `RPCContract` for `GetNote`:
+First, we define an `RPCContract` for `GetNote`:
 
 ```go
 getNoteContract := &contracts.UnaryRPCContract{
@@ -126,7 +126,7 @@ s := grpc.NewServer(grpc.UnaryInterceptor(contract.UnaryServerInterceptor()))
 conn, err := grpc.Dial(authServerAddress, grpc.WithUnaryInterceptor(ns.contract.UnaryClientInterceptor()))
 ```
 
-Complete version NoteService example containing all of the source codes is available [here](examples/noteservice/). 
+A complete version of the NoteService example containing all of the source codes is available [here](examples/noteservice/).
 
 
 ## API Documentation
@@ -139,5 +139,5 @@ See complete API documentation [here](https://pkg.go.dev/github.com/shayanh/grpc
 - [ ] Write tests!
 - [ ] Support streaming RPCs.
 - [ ] Add terminate option on contract violation.
-- [ ] Native support of popular logger libraries.
+- [ ] Native support of popular logging libraries.
 - [ ] Add asynchronous contract checking option.
