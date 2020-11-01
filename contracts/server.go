@@ -2,21 +2,19 @@ package contracts
 
 import (
 	"context"
+	"errors"
 	"sync"
 
 	"google.golang.org/grpc"
 )
 
-// Logger represents the interface of a required logger.
-type Logger interface {
-	Info(args ...interface{})
-	Error(args ...interface{})
-	Fatal(args ...interface{})
-}
+// LogFunc is a function that logs the provided message. It is compatible
+// with stdlib logger methods like `log.Print` and `log.Println`.
+type LogFunc func(args ...interface{})
 
 // ServerContract is a contract defined for a gRPC server.
 type ServerContract struct {
-	logger Logger
+	logFunc LogFunc
 
 	callsLock     sync.RWMutex
 	unaryRPCCalls map[string]map[string][]*UnaryRPCCall
@@ -28,10 +26,10 @@ type ServerContract struct {
 }
 
 // NewServerContract creates a ServerContract that has no contracts registered.
-// It requires a logger to log the violation of its contracts.
-func NewServerContract(logger Logger) *ServerContract {
+// It requires a logger function to log the violation of its contracts.
+func NewServerContract(logFunc LogFunc) *ServerContract {
 	return &ServerContract{
-		logger:            logger,
+		logFunc:           logFunc,
 		unaryRPCCalls:     make(map[string]map[string][]*UnaryRPCCall),
 		callCnt:           make(map[string]int),
 		unaryRPCContracts: make(map[string]*UnaryRPCContract),
@@ -40,30 +38,31 @@ func NewServerContract(logger Logger) *ServerContract {
 
 // RegisterServiceContract registers a service contract and its RPC contracts to
 // the gRPC server contract. This must be called before invoking UnaryServerInterceptor.
-func (sc *ServerContract) RegisterServiceContract(svcContract *ServiceContract) {
+func (sc *ServerContract) RegisterServiceContract(svcContract *ServiceContract) error {
 	for _, rpcContract := range svcContract.RPCContracts {
 		if err := rpcContract.validate(); err != nil {
-			sc.logger.Fatal(err)
+			return err
 		}
 	}
-	sc.register(svcContract)
+	return sc.register(svcContract)
 }
 
-func (sc *ServerContract) register(svcContract *ServiceContract) {
+func (sc *ServerContract) register(svcContract *ServiceContract) error {
 	sc.contractsLock.Lock()
 	defer sc.contractsLock.Unlock()
 
 	if sc.serve {
-		sc.logger.Fatal("ServerContract.RegisterServiceContract must called before ServerContract.UnaryServerInterceptor")
+		return errors.New("ServerContract.RegisterServiceContract must called before ServerContract.UnaryServerInterceptor")
 	}
 
 	for _, rpcContract := range svcContract.RPCContracts {
 		fullMethodName := getFullMethodName(svcContract.ServiceName, rpcContract.MethodName)
 		if _, ok := sc.unaryRPCContracts[fullMethodName]; ok {
-			sc.logger.Fatal("ServerContract.RegisterServiceContract found duplicate contract registration")
+			return errors.New("ServerContract.RegisterServiceContract found duplicate contract registration")
 		}
 		sc.unaryRPCContracts[fullMethodName] = rpcContract
 	}
+	return nil
 }
 
 func (sc *ServerContract) generateRequestID(ctx context.Context) (context.Context, string) {
@@ -106,24 +105,24 @@ func (sc *ServerContract) UnaryServerInterceptor() grpc.UnaryServerInterceptor {
 			for _, preCondition := range c.PreConditions {
 				err := invokePreCondition(preCondition, req)
 				if err != nil {
-					sc.logger.Error(err)
+					sc.logFunc(err, info.FullMethod, req)
 				}
 			}
 		}
 
-		resp, err := handler(ctx, req)
+		resp, handlerErr := handler(ctx, req)
 
 		if ok {
 			for _, postCondition := range c.PostConditions {
-				err := invokePostCondition(postCondition, resp, err, req,
+				err := invokePostCondition(postCondition, resp, handlerErr, req,
 					RPCCallHistory{requestID: requestID, sc: sc})
 				if err != nil {
-					sc.logger.Error(err)
+					sc.logFunc(err, info.FullMethod, req, resp, handlerErr)
 				}
 			}
 			sc.cleanup(requestID)
 		}
-		return resp, err
+		return resp, handlerErr
 	}
 }
 
