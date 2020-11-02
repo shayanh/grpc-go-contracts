@@ -4,9 +4,13 @@ package contracts
 type UnaryRPCContract struct {
 	// MethodName is the method name only, without the service name or package name.
 	MethodName string
-	// Preconditions are conditions that must always be true just prior to the execution of the RPC.
+	// PreConditions are conditions that must always be true just prior to the execution of the RPC.
+	// Each PreCondition should be a function with the following signature:
+	// `func(req *Request) error`.
 	PreConditions []Condition
-	// Postconditions are conditions that must always be true just after the execution of the RPC.
+	// PostConditions are conditions that must always be true just after the execution of the RPC.
+	// Each PostCondition should be a function with the following signature:
+	// `func(resp *Response, respErr error, req *Request, calls contracts.RPCCallHistory) error`.
 	PostConditions []Condition
 }
 

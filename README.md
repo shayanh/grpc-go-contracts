@@ -2,14 +2,14 @@
 
 [![PkgGoDev](https://pkg.go.dev/badge/github.com/shayanh/grpc-go-contracts/contracts)](https://pkg.go.dev/github.com/shayanh/grpc-go-contracts/contracts)
 
-Verify your microservices communications by writing contracts for your RPCs.
+Verify the communication of your microservices by writing contracts for your RPCs.
 
-gRPC Go Contracts implements contract programming (aka Design by Contract) for gRPC methods written in go. This library provides:
+gRPC Go Contracts implements contract programming (aka Design by Contract) for gRPC methods written in go. It supports: 
 
 * **Preconditions**: Preconditions are conditions that must always be true just before the execution of the RPC. In a precondition, you can access RPC's input values.
 * **Postconditions**: Postconditions are conditions that must always be true just after the execution of the RPC. In a postcondition, you can access the RPC's input and return values. Moreover, you will be able to access RPC calls made by the requested RPC during the request lifetime. This allows you to verify the execution order of RPC calls, which is amazing! For more details please see the [example](#usage-and-example) below.
 
-In the case of contract violation, gRPC Go Contract logs the contract error message and related parameters. This library only supports unary RPCs for now.
+In the case of contract violation, gRPC Go Contracts logs the contract error message and related parameters. At this time, just unary RPCs are supported. 
 
 For more information please see: https://en.wikipedia.org/wiki/Design_by_contract
 
@@ -25,6 +25,8 @@ Let's consider a very simple note-taking application named NoteService. NoteServ
 
 * [**NoteStore**](examples/noteservice/notestore/main.go): NoteStore simply stores notes. Its only API is `GetNote(note_id, token)`. `GetNote` first authenticates the input `token` by calling AuthServices. If authentication was successful, it returns the related note.
 * [**AuthService**](examples/noteservice/authservice/main.go): AuthService is responsible for authentication. Its only API is `Authenticate(token)`. `Authenticate` gets a token, and if the token was valid, it returns the related user ID.
+
+![NoteService diagram](img/NoteService.png)
 
 Protocol buffers definition of these services:
 
