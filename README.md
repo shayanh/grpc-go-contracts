@@ -26,7 +26,9 @@ Let's consider a very simple note-taking application named NoteService. NoteServ
 * [**NoteStore**](examples/noteservice/notestore/main.go): NoteStore simply stores notes. Its only API is `GetNote(note_id, token)`. `GetNote` first authenticates the input `token` by calling AuthServices. If authentication was successful, it returns the related note.
 * [**AuthService**](examples/noteservice/authservice/main.go): AuthService is responsible for authentication. Its only API is `Authenticate(token)`. `Authenticate` gets a token, and if the token was valid, it returns the related user ID.
 
-![NoteService diagram](img/NoteService.png)
+<p align="center">
+    <img src="img/NoteService.png?raw=true" alt="NoteService diagram">
+</p>
 
 Protocol buffers definition of these services:
 
