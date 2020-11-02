@@ -68,7 +68,7 @@ Now we want to write the following precondition for `GetNote` RPC:
 
 And we want to have the following postconditions for `GetNote` RPC:
 
-1. If `GetNote` return value has no error, then `GetNote` must successfully have called `Authenticate` RPC on AuthService. 
+1. If `GetNote` return value has no error, then `GetNote` must successfully have called `Authenticate` RPC on AuthService. We don't want a data breach!
 2. If `GetNote` return value has no error, then output note ID must be equal to input `note_id`.
 
 First, we define an `RPCContract` for `GetNote`:
@@ -124,10 +124,10 @@ Finally, we use `serverContract`'s interceptors in the gRPC server and clients:
 
 ```go
 // server
-s := grpc.NewServer(grpc.UnaryInterceptor(contract.UnaryServerInterceptor()))
+s := grpc.NewServer(grpc.UnaryInterceptor(serverContract.UnaryServerInterceptor()))
 
 // client
-conn, err := grpc.Dial(authServerAddress, grpc.WithUnaryInterceptor(ns.contract.UnaryClientInterceptor()))
+conn, err := grpc.Dial(addr, grpc.WithUnaryInterceptor(serverContract.UnaryClientInterceptor()))
 ```
 
 A complete version of the NoteService example containing all of the source codes is available [here](examples/noteservice/).
