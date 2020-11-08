@@ -33,6 +33,7 @@ github.com/shayanh/grpc-go-contracts v0.0.0-20201025105614-e33295445f81 h1:YxVx8
 github.com/shayanh/grpc-go-contracts v0.0.0-20201025105614-e33295445f81/go.mod h1:4qI0saBP78Ru4/d6neWSWfIE/C1nWslPCclm9GRyidU=
 github.com/shayanh/grpc-go-contracts v0.0.0-20201101030721-ca67ec1c135f h1:z9KLExNiaax0i4dMLvLYX7VFVIeliLIQ/qxWcJHxDmg=
 github.com/shayanh/grpc-go-contracts v0.0.0-20201101030721-ca67ec1c135f/go.mod h1:4qI0saBP78Ru4/d6neWSWfIE/C1nWslPCclm9GRyidU=
+github.com/shayanh/grpc-go-contracts v0.0.0-20201102164518-2870cf7e9e51 h1:4F9n09iWbQFfYSSiMgts+MG3ZwoT14bz00U34wPouA4=
 golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2/go.mod h1:djNgcEr1/C05ACkg1iLfiJU5Ep61QUkGW8qpdssI0+w=
 golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9/go.mod h1:LzIPMQfyMNhhGPhUkYOs5KpL4U8rLKemX1yGLhDgUto=
 golang.org/x/exp v0.0.0-20190121172915-509febef88a4/go.mod h1:CJ0aWSM057203Lf6IL+f9T1iT9GByDxfZKAQTCR3kQA=

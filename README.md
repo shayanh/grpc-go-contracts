@@ -21,21 +21,21 @@ $ go get github.com/shayanh/grpc-go-contracts/contracts
 
 ## Usage and Example
 
-Let's consider a very simple note-taking application named NoteService. NoteService consists of two microservices:
+Let's consider a very simple note-taking application named MyNote. MyNote consists of two microservices:
 
-* [**NoteStore**](examples/noteservice/notestore/main.go): NoteStore simply stores notes. Its only API is `GetNote(note_id, token)`. `GetNote` first authenticates the input `token` by calling AuthServices. If authentication was successful, it returns the related note.
-* [**AuthService**](examples/noteservice/authservice/main.go): AuthService is responsible for authentication. Its only API is `Authenticate(token)`. `Authenticate` gets a token, and if the token was valid, it returns the related user ID.
+* [**NoteService**](examples/mynote/NoteService/main.go): NoteService simply stores notes. Its only API is `GetNote(note_id, token)`. `GetNote` first authenticates the input `token` by calling AuthServices. If authentication was successful, it returns the related note.
+* [**AuthService**](examples/mynote/authservice/main.go): AuthService is responsible for authentication. Its only API is `Authenticate(token)`. `Authenticate` gets a token, and if the token was valid, it returns the related user ID.
 
 <p align="center">
-    <img src="img/NoteService.png?raw=true" alt="NoteService diagram">
+    <img src="img/MyNote.png?raw=true" alt="MyNote diagram" width="35%">
 </p>
 
 Protocol buffers definition of these services:
 
 ```protobuf
-package noteservice;
+package mynote;
 
-service NoteStore {
+service NoteService {
     rpc GetNote(GetNoteRequest) returns (Note) {}
 }
 
@@ -71,7 +71,7 @@ And we want to have the following postconditions for `GetNote` RPC:
 1. If `GetNote` return value has no error, then `GetNote` must successfully have called `Authenticate` RPC on AuthService. We don't want a data breach!
 2. If `GetNote` return value has no error, then output note ID must be equal to input `note_id`.
 
-First, we define an `RPCContract` for `GetNote`:
+First, we define a `UnaryRPCContract` for `GetNote`:
 
 ```go
 getNoteContract := &contracts.UnaryRPCContract{
@@ -89,7 +89,7 @@ getNoteContract := &contracts.UnaryRPCContract{
             if outErr != nil {
                 return nil
             }
-            if calls.Filter("noteservice.AuthService", "Authenticate").Successful().Empty() {
+            if calls.Filter("mynote.AuthService", "Authenticate").Successful().Empty() {
                 return errors.New("no successful call to auth service")
             }
             return nil
@@ -107,17 +107,17 @@ getNoteContract := &contracts.UnaryRPCContract{
 }
 ```
 
-Next, we define a `ServiceContract` for the NoteStore service and a `ServerContract` for the gRPC server:
+Next, we define a `ServiceContract` for the NoteService service and a `ServerContract` for the gRPC server:
 
 ```go
-noteStoreContract := &contracts.ServiceContract{
-    ServiceName: "noteservice.NoteStore",
+noteServiceContract := &contracts.ServiceContract{
+    ServiceName: "mynote.NoteService",
     RPCContracts: []*contracts.UnaryRPCContract{
         getNoteContract,
     },
 }
 serverContract := contracts.NewServerContract(log.Println)
-serverContract.RegisterServiceContract(noteStoreContract)
+serverContract.RegisterServiceContract(noteServiceContract)
 ```
 
 Finally, we use `serverContract`'s interceptors in the gRPC server and clients:
@@ -130,7 +130,7 @@ s := grpc.NewServer(grpc.UnaryInterceptor(serverContract.UnaryServerInterceptor(
 conn, err := grpc.Dial(addr, grpc.WithUnaryInterceptor(serverContract.UnaryClientInterceptor()))
 ```
 
-A complete version of the NoteService example containing all of the source codes is available [here](examples/noteservice/).
+A complete version of the MyNote example containing all of the source codes is available [here](examples/mynote/).
 
 
 ## API Documentation

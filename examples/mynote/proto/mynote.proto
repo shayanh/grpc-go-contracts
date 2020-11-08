@@ -1,10 +1,10 @@
 syntax = "proto3";
 
-option go_package = "github.com/shayanh/grpc-go-contracts/examples/noteservice/proto";
+option go_package = "github.com/shayanh/grpc-go-contracts/examples/mynote/proto";
 
-package noteservice;
+package mynote;
 
-service NoteStore {
+service NoteService {
     rpc GetNote(GetNoteRequest) returns (Note) {}
 }
 

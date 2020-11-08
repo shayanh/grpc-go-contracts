@@ -1,4 +1,4 @@
-module github.com/shayanh/grpc-go-contracts/examples/noteservice
+module github.com/shayanh/grpc-go-contracts/examples/mynote
 
 go 1.15
 
