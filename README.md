@@ -23,7 +23,7 @@ $ go get github.com/shayanh/grpc-go-contracts/contracts
 
 Let's consider a very simple note-taking application named MyNote. MyNote consists of two microservices:
 
-* [**NoteService**](examples/mynote/NoteService/main.go): NoteService simply stores notes. Its only API is `GetNote(note_id, token)`. `GetNote` first authenticates the input `token` by calling AuthServices. If authentication was successful, it returns the related note.
+* [**NoteService**](examples/mynote/noteservice/main.go): NoteService simply stores notes. Its only API is `GetNote(note_id, token)`. `GetNote` first authenticates the input `token` by calling AuthServices. If authentication was successful, it returns the related note.
 * [**AuthService**](examples/mynote/authservice/main.go): AuthService is responsible for authentication. Its only API is `Authenticate(token)`. `Authenticate` gets a token, and if the token was valid, it returns the related user ID.
 
 <p align="center">
