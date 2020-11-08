@@ -27,7 +27,7 @@ Let's consider a very simple note-taking application named MyNote. MyNote consis
 * [**AuthService**](examples/mynote/authservice/main.go): AuthService is responsible for authentication. Its only API is `Authenticate(token)`. `Authenticate` gets a token, and if the token was valid, it returns the related user ID.
 
 <p align="center">
-    <img src="img/MyNote.png?raw=true" alt="MyNote diagram" width="35%">
+    <img src="img/MyNote.png?raw=true" alt="MyNote diagram" width="50%">
 </p>
 
 Protocol buffers definition of these services:
