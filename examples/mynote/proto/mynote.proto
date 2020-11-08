@@ -4,7 +4,7 @@ option go_package = "github.com/shayanh/grpc-go-contracts/examples/mynote/proto"
 
 package mynote;
 
-service NoteStore {
+service NoteService {
     rpc GetNote(GetNoteRequest) returns (Note) {}
 }
 

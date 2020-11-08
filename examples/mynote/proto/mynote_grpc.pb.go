@@ -13,83 +13,83 @@ import (
 // is compatible with the grpc package it is being compiled against.
 const _ = grpc.SupportPackageIsVersion7
 
-// NoteStoreClient is the client API for NoteStore service.
+// NoteServiceClient is the client API for NoteService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type NoteStoreClient interface {
+type NoteServiceClient interface {
 	GetNote(ctx context.Context, in *GetNoteRequest, opts ...grpc.CallOption) (*Note, error)
 }
 
-type noteStoreClient struct {
+type noteServiceClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewNoteStoreClient(cc grpc.ClientConnInterface) NoteStoreClient {
-	return &noteStoreClient{cc}
+func NewNoteServiceClient(cc grpc.ClientConnInterface) NoteServiceClient {
+	return &noteServiceClient{cc}
 }
 
-func (c *noteStoreClient) GetNote(ctx context.Context, in *GetNoteRequest, opts ...grpc.CallOption) (*Note, error) {
+func (c *noteServiceClient) GetNote(ctx context.Context, in *GetNoteRequest, opts ...grpc.CallOption) (*Note, error) {
 	out := new(Note)
-	err := c.cc.Invoke(ctx, "/mynote.NoteStore/GetNote", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/mynote.NoteService/GetNote", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// NoteStoreServer is the server API for NoteStore service.
-// All implementations must embed UnimplementedNoteStoreServer
+// NoteServiceServer is the server API for NoteService service.
+// All implementations must embed UnimplementedNoteServiceServer
 // for forward compatibility
-type NoteStoreServer interface {
+type NoteServiceServer interface {
 	GetNote(context.Context, *GetNoteRequest) (*Note, error)
-	mustEmbedUnimplementedNoteStoreServer()
+	mustEmbedUnimplementedNoteServiceServer()
 }
 
-// UnimplementedNoteStoreServer must be embedded to have forward compatible implementations.
-type UnimplementedNoteStoreServer struct {
+// UnimplementedNoteServiceServer must be embedded to have forward compatible implementations.
+type UnimplementedNoteServiceServer struct {
 }
 
-func (UnimplementedNoteStoreServer) GetNote(context.Context, *GetNoteRequest) (*Note, error) {
+func (UnimplementedNoteServiceServer) GetNote(context.Context, *GetNoteRequest) (*Note, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetNote not implemented")
 }
-func (UnimplementedNoteStoreServer) mustEmbedUnimplementedNoteStoreServer() {}
+func (UnimplementedNoteServiceServer) mustEmbedUnimplementedNoteServiceServer() {}
 
-// UnsafeNoteStoreServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to NoteStoreServer will
+// UnsafeNoteServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to NoteServiceServer will
 // result in compilation errors.
-type UnsafeNoteStoreServer interface {
-	mustEmbedUnimplementedNoteStoreServer()
+type UnsafeNoteServiceServer interface {
+	mustEmbedUnimplementedNoteServiceServer()
 }
 
-func RegisterNoteStoreServer(s grpc.ServiceRegistrar, srv NoteStoreServer) {
-	s.RegisterService(&_NoteStore_serviceDesc, srv)
+func RegisterNoteServiceServer(s grpc.ServiceRegistrar, srv NoteServiceServer) {
+	s.RegisterService(&_NoteService_serviceDesc, srv)
 }
 
-func _NoteStore_GetNote_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _NoteService_GetNote_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetNoteRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(NoteStoreServer).GetNote(ctx, in)
+		return srv.(NoteServiceServer).GetNote(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/mynote.NoteStore/GetNote",
+		FullMethod: "/mynote.NoteService/GetNote",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(NoteStoreServer).GetNote(ctx, req.(*GetNoteRequest))
+		return srv.(NoteServiceServer).GetNote(ctx, req.(*GetNoteRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-var _NoteStore_serviceDesc = grpc.ServiceDesc{
-	ServiceName: "mynote.NoteStore",
-	HandlerType: (*NoteStoreServer)(nil),
+var _NoteService_serviceDesc = grpc.ServiceDesc{
+	ServiceName: "mynote.NoteService",
+	HandlerType: (*NoteServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
 			MethodName: "GetNote",
-			Handler:    _NoteStore_GetNote_Handler,
+			Handler:    _NoteService_GetNote_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
