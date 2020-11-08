@@ -23,11 +23,11 @@ $ go get github.com/shayanh/grpc-go-contracts/contracts
 
 Let's consider a very simple note-taking application named MyNote. MyNote consists of two microservices:
 
-* [**NoteStore**](examples/mynote/notestore/main.go): NoteStore simply stores notes. Its only API is `GetNote(note_id, token)`. `GetNote` first authenticates the input `token` by calling AuthServices. If authentication was successful, it returns the related note.
+* [**NoteService**](examples/mynote/NoteService/main.go): NoteService simply stores notes. Its only API is `GetNote(note_id, token)`. `GetNote` first authenticates the input `token` by calling AuthServices. If authentication was successful, it returns the related note.
 * [**AuthService**](examples/mynote/authservice/main.go): AuthService is responsible for authentication. Its only API is `Authenticate(token)`. `Authenticate` gets a token, and if the token was valid, it returns the related user ID.
 
 <p align="center">
-    <img src="img/NoteService.png?raw=true" alt="NoteService diagram">
+    <img src="img/MyNote.png?raw=true" alt="MyNote diagram" width="35%">
 </p>
 
 Protocol buffers definition of these services:
@@ -35,7 +35,7 @@ Protocol buffers definition of these services:
 ```protobuf
 package mynote;
 
-service NoteStore {
+service NoteService {
     rpc GetNote(GetNoteRequest) returns (Note) {}
 }
 
@@ -107,17 +107,17 @@ getNoteContract := &contracts.UnaryRPCContract{
 }
 ```
 
-Next, we define a `ServiceContract` for the NoteStore service and a `ServerContract` for the gRPC server:
+Next, we define a `ServiceContract` for the NoteService service and a `ServerContract` for the gRPC server:
 
 ```go
-noteStoreContract := &contracts.ServiceContract{
-    ServiceName: "mynote.NoteStore",
+noteServiceContract := &contracts.ServiceContract{
+    ServiceName: "mynote.NoteService",
     RPCContracts: []*contracts.UnaryRPCContract{
         getNoteContract,
     },
 }
 serverContract := contracts.NewServerContract(log.Println)
-serverContract.RegisterServiceContract(noteStoreContract)
+serverContract.RegisterServiceContract(noteServiceContract)
 ```
 
 Finally, we use `serverContract`'s interceptors in the gRPC server and clients:
