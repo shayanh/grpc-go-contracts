@@ -30,7 +30,7 @@ func NewNoteStoreClient(cc grpc.ClientConnInterface) NoteStoreClient {
 
 func (c *noteStoreClient) GetNote(ctx context.Context, in *GetNoteRequest, opts ...grpc.CallOption) (*Note, error) {
 	out := new(Note)
-	err := c.cc.Invoke(ctx, "/noteservice.NoteStore/GetNote", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/mynote.NoteStore/GetNote", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -75,7 +75,7 @@ func _NoteStore_GetNote_Handler(srv interface{}, ctx context.Context, dec func(i
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/noteservice.NoteStore/GetNote",
+		FullMethod: "/mynote.NoteStore/GetNote",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(NoteStoreServer).GetNote(ctx, req.(*GetNoteRequest))
@@ -84,7 +84,7 @@ func _NoteStore_GetNote_Handler(srv interface{}, ctx context.Context, dec func(i
 }
 
 var _NoteStore_serviceDesc = grpc.ServiceDesc{
-	ServiceName: "noteservice.NoteStore",
+	ServiceName: "mynote.NoteStore",
 	HandlerType: (*NoteStoreServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -93,7 +93,7 @@ var _NoteStore_serviceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "proto/noteservice.proto",
+	Metadata: "proto/mynote.proto",
 }
 
 // AuthServiceClient is the client API for AuthService service.
@@ -113,7 +113,7 @@ func NewAuthServiceClient(cc grpc.ClientConnInterface) AuthServiceClient {
 
 func (c *authServiceClient) Authenticate(ctx context.Context, in *AuthenticateRequest, opts ...grpc.CallOption) (*AuthenticateResponse, error) {
 	out := new(AuthenticateResponse)
-	err := c.cc.Invoke(ctx, "/noteservice.AuthService/Authenticate", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/mynote.AuthService/Authenticate", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -158,7 +158,7 @@ func _AuthService_Authenticate_Handler(srv interface{}, ctx context.Context, dec
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/noteservice.AuthService/Authenticate",
+		FullMethod: "/mynote.AuthService/Authenticate",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(AuthServiceServer).Authenticate(ctx, req.(*AuthenticateRequest))
@@ -167,7 +167,7 @@ func _AuthService_Authenticate_Handler(srv interface{}, ctx context.Context, dec
 }
 
 var _AuthService_serviceDesc = grpc.ServiceDesc{
-	ServiceName: "noteservice.AuthService",
+	ServiceName: "mynote.AuthService",
 	HandlerType: (*AuthServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -176,5 +176,5 @@ var _AuthService_serviceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "proto/noteservice.proto",
+	Metadata: "proto/mynote.proto",
 }

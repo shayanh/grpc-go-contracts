@@ -4,7 +4,7 @@ import (
 	"context"
 	"log"
 
-	pb "github.com/shayanh/grpc-go-contracts/examples/noteservice/proto"
+	pb "github.com/shayanh/grpc-go-contracts/examples/mynote/proto"
 	"google.golang.org/grpc"
 )
 

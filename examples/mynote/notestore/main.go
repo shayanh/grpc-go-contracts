@@ -8,7 +8,7 @@ import (
 	"sync"
 
 	"github.com/shayanh/grpc-go-contracts/contracts"
-	pb "github.com/shayanh/grpc-go-contracts/examples/noteservice/proto"
+	pb "github.com/shayanh/grpc-go-contracts/examples/mynote/proto"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -57,7 +57,7 @@ func createContract() *contracts.ServerContract {
 				if outErr != nil {
 					return nil
 				}
-				if calls.Filter("noteservice.AuthService", "Authenticate").Successful().Empty() {
+				if calls.Filter("mynote.AuthService", "Authenticate").Successful().Empty() {
 					return errors.New("no successful call to auth service")
 				}
 				return nil
@@ -74,7 +74,7 @@ func createContract() *contracts.ServerContract {
 		},
 	}
 	noteStoreContract := &contracts.ServiceContract{
-		ServiceName: "noteservice.NoteStore",
+		ServiceName: "mynote.NoteStore",
 		RPCContracts: []*contracts.UnaryRPCContract{
 			getNoteContract,
 		},

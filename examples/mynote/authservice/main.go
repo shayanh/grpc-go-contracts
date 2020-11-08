@@ -6,7 +6,7 @@ import (
 	"net"
 	"sync"
 
-	pb "github.com/shayanh/grpc-go-contracts/examples/noteservice/proto"
+	pb "github.com/shayanh/grpc-go-contracts/examples/mynote/proto"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
